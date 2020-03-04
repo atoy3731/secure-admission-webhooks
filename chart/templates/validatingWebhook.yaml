@@ -1,0 +1,31 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: validating-webhook
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/random-uid-certs
+  labels:
+    component: mutating-controller
+webhooks:
+  - name: www.test.com
+    failurePolicy: Fail
+    clientConfig:
+      service:
+        name: {{ .Chart.Name }}
+        namespace: {{ .Release.Namespace }}
+        path: /validate/noprivilege
+    rules:
+      - apiGroups: ["apps"]
+        resources:
+          - "deployments"
+        apiVersions:
+          - "*"
+        operations:
+          - CREATE
+      - apiGroups: [""]
+        resources:
+          - "pods"
+        apiVersions:
+          - "*"
+        operations:
+          - CREATE

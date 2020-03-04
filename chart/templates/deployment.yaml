@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+    selector: {{ .Chart.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      selector: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+        selector: {{ .Chart.Name }}
+    spec:
+      containers:
+      - name: main
+        volumeMounts:
+        - name: random-uid-certs
+          mountPath: "/certs"
+          readOnly: true
+        image: {{ .Values.image }}
+        imagePullPolicy: {{ .Values.pullPolicy }}
+        ports:
+        - containerPort: 8443
+        env:
+        - name: CERT
+          value: "/certs/tls.crt"
+        - name: KEY
+          value: "/certs/tls.key"
+      volumes:
+      - name: random-uid-certs
+        secret:
+          secretName: random-uid-certs
