@@ -45,8 +45,16 @@ def block_privilege_webhook_validate():
     """
     request_json = request.get_json()
 
+    # Manages if the request is for a Deployment, since it has different pathing to get to Privilege Escalation.
     if request_json['request']['kind']['kind'] == 'Deployment':
-        print('deployment')
+        if 'securityContext' in request_json["request"]["object"]["spec"]['template']['spec'] and 'allowPrivilegeEscalation' in request_json["request"]["object"]["spec"]['template']['spec']['securityContext'] and request_json["request"]["object"]["spec"]['securityContext']['allowPrivilegeEscalation']:
+            return _admission_validation_response(False, "Privilege escalation not allowed.")
+        
+        for container_spec in request_json["request"]["object"]["spec"]["template']['spec']["containers"]:
+            if 'securityContext' in container_spec and 'allowPrivilegeEscalation' in container_spec['securityContext'] and container_spec['securityContext']['allowPrivilegeEscalation']:
+                return _admission_validation_response(False, "Privilege escalation not allowed.")
+        
+    # Manages if the request is for a Pod, since it has different pathing to get to Privilege Escalation.                                                             
     elif request_json['request']['kind']['kind'] == 'Pod':
         if 'securityContext' in request_json["request"]["object"]["spec"] and 'allowPrivilegeEscalation' in request_json["request"]["object"]["spec"]['securityContext'] and request_json["request"]["object"]["spec"]['securityContext']['allowPrivilegeEscalation']:
             return _admission_validation_response(False, "Privilege escalation not allowed.")
